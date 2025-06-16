@@ -1,4 +1,4 @@
-package main
+package csv
 
 import (
 	"errors"
@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/s-hammon/p"
 )
 
 func TestCsvReader(t *testing.T) {
@@ -30,10 +32,10 @@ Yojimbo,"Akira Kurosawa",1961
 	}
 
 	require.Equal(t, 4, len(rows))
-	assert.Equal(t, `["movie","director","year"]`, Marshal(rows[0]))
-	assert.Equal(t, `["Tombstone","George P. Cosmatos","1993"]`, Marshal(rows[1]))
-	assert.Equal(t, `["Yojimbo","Akira Kurosawa","1961"]`, Marshal(rows[2]))
-	assert.Equal(t, `["The Thing","John Carpenter","1982"]`, Marshal(rows[3]))
+	assert.Equal(t, `["movie","director","year"]`, p.Marshal(rows[0]))
+	assert.Equal(t, `["Tombstone","George P. Cosmatos","1993"]`, p.Marshal(rows[1]))
+	assert.Equal(t, `["Yojimbo","Akira Kurosawa","1961"]`, p.Marshal(rows[2]))
+	assert.Equal(t, `["The Thing","John Carpenter","1982"]`, p.Marshal(rows[3]))
 
 	data = `title|composer|year
 "Yell \"Dead Cell\""|Norihiko Hibino|2001
