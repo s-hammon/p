@@ -132,10 +132,23 @@ func NewCsv(options ...CsvOptions) *Csv {
 }
 
 func (c *Csv) NewReader(r io.Reader) *csvReader {
-	cr := &csvReader{
+	return &csvReader{
 		reader:     bufio.NewReaderSize(r, 100*1024),
 		lineBuffer: strings.Builder{},
 		csv:        c,
 	}
-	return cr
+}
+
+type Writer struct {
+	Comma byte
+	w     *bufio.Writer
+	bytes int
+}
+
+func (c *Csv) NewWriter(w io.Writer) *Writer {
+	return &Writer{
+		Comma: c.options.Delimiter,
+		w:     bufio.NewWriterSize(w, 100*1024),
+		bytes: 0,
+	}
 }
