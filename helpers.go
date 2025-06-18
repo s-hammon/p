@@ -43,6 +43,13 @@ func Format(tmpl string, elems ...any) string {
 	return fmt.Sprintf(tmpl, elems...)
 }
 
+func Coalesce[T any](a, b T) T {
+	if IsZero(a) {
+		return b
+	}
+	return a
+}
+
 // convert map to list of key-value pairs ("key=value")
 // useful for injecting params in URL payload
 func SerializeMap[T comparable](m map[string]T) []string {
