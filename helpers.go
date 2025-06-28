@@ -101,6 +101,56 @@ func Union[S ~[]E, E comparable](s1, s2 S) S {
 	return res
 }
 
+type node struct {
+	children map[rune]*node
+	isEnd    bool
+}
+
+func newNode() *node {
+	return &node{
+		children: make(map[rune]*node),
+	}
+}
+
+type Trie struct {
+	root *node
+}
+
+func NewTrie() *Trie {
+	return &Trie{
+		root: newNode(),
+	}
+}
+
+func (t *Trie) Search(s string) bool {
+	current := t.root
+	for _, c := range s {
+		if _, ok := current.children[c]; !ok {
+			return false
+		}
+		current = current.children[c]
+	}
+	return current.isEnd
+}
+
+func (t *Trie) Add(s string) {
+	current := t.root
+	for _, c := range s {
+		if _, ok := current.children[c]; !ok {
+			current.children[c] = newNode()
+		}
+		current = current.children[c]
+	}
+	current.isEnd = true
+}
+
+// makes a trie from a list of strings
+func (t *Trie) AddMany(elements ...string) {
+	for _, element := range elements {
+		t.Add(element)
+	}
+}
+
 // returns the set of common elements between two slices
 func Intersection[T comparable](s1, s2 []T) []T {
 	set := SetM(s1)
