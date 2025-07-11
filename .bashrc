@@ -21,7 +21,6 @@ export PATH=$PATH:$HOME/go/bin
 export PATH="$PATH:/home/sven/.turso"
 export EDITOR=nvim
 
-. "$HOME/.cargo/env"
 export PATH=~/bin:$PATH
 
 # The next line updates PATH for the Google Cloud SDK.

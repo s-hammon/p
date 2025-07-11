@@ -3,6 +3,8 @@ package p
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCoalesce(t *testing.T) {
@@ -59,6 +61,49 @@ func TestCoalesce(t *testing.T) {
 			if !reflect.DeepEqual(tt.want, got) {
 				t.Fatalf("want '%v', got '%v'", tt.want, got)
 			}
+		})
+	}
+}
+
+func TestStringDeserialize(t *testing.T) {
+	tests := []struct {
+		name  string
+		props []string
+		want  map[string]string
+	}{
+		{
+			"key-value pair",
+			[]string{"key=value"},
+			map[string]string{"key": "value"},
+		},
+		{
+			"multiple key-value pair",
+			[]string{
+				"user=name",
+				"pass=word",
+				"8=D",
+			},
+			map[string]string{
+				"user": "name",
+				"pass": "word",
+				"8":    "D",
+			},
+		},
+		{
+			"missing key/value",
+			[]string{
+				"this=works",
+				"nokey=",
+				"=noval",
+			},
+			map[string]string{"this": "works"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := StringDeserialize(tt.props)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

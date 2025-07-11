@@ -60,6 +60,21 @@ func SerializeMap[T comparable](m map[string]T) []string {
 	return props
 }
 
+// deserializes []string (see `SerializeMap`) to map[string]string
+// requires both key and value to be non-zero (and later not null)
+// TODO: support for `map[string]any`
+func StringDeserialize(props []string) map[string]string {
+	m := make(map[string]string)
+	for _, prop := range props {
+		parts := strings.SplitN(prop, "=", 2)
+		fmt.Println(len(Set(parts)))
+		if len(Set(parts)) == 2 {
+			m[parts[0]] = parts[1]
+		}
+	}
+	return m
+}
+
 // filters an array with the filter function 'fn'
 func Filter[T any](ss []T, fn func(T) bool) (ret []T) {
 	for _, s := range ss {
@@ -74,7 +89,7 @@ func IsIn[T comparable](v T, s ...T) bool {
 	return slices.Contains(s, v)
 }
 
-// returns the unique set of (hashable) elements in a slice/array
+// returns the unique set of (hashable) non-zero elements in a slice/array
 func Set[T comparable](ss []T) []T {
 	set := SetM(ss)
 	return Keys(set)
@@ -84,6 +99,9 @@ func Set[T comparable](ss []T) []T {
 func SetM[T comparable](ss []T) map[T]struct{} {
 	set := make(map[T]struct{})
 	for _, s := range ss {
+		if IsZero(s) {
+			continue
+		}
 		set[s] = struct{}{}
 	}
 	return set
