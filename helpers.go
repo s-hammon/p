@@ -60,6 +60,16 @@ func SerializeMap[T comparable](m map[string]T) []string {
 	return props
 }
 
+// convert map to key-value pairs where the value is quoted (key="value")
+// useful for things like adding props to HTML tags
+func SerializeMapQuoteVal[T comparable](m map[string]T) []string {
+	props := make([]string, 0, len(m))
+	for k, v := range m {
+		props = append(props, Format(`%v="%v"`, k, v))
+	}
+	return props
+}
+
 // deserializes []string (see `SerializeMap`) to map[string]string
 // requires both key and value to be non-zero (and later not null)
 // TODO: support for `map[string]any`
