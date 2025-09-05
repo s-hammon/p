@@ -106,20 +106,12 @@ func (dec *Decoder) decodeLine(line []string, s reflect.Value) error {
 		case reflect.String:
 			f.SetString(line[idx])
 		case reflect.Int:
-			if p.IsZero(line[idx]) {
-				f.SetInt(0)
-				continue
-			}
 			ival, err := strconv.ParseInt(line[idx], 10, 0)
 			if err != nil {
 				return fmt.Errorf("strconv.ParseInt(%v): %v", line[idx], err)
 			}
 			f.SetInt(ival)
 		case reflect.Float32, reflect.Float64:
-			if p.IsZero(line[idx]) {
-				f.SetFloat(0)
-				continue
-			}
 			fval, err := strconv.ParseFloat(line[idx], 64)
 			if err != nil {
 				return fmt.Errorf("idx: %d\tstrconv.ParseFloat(%v): %v", idx, line[idx], err)
