@@ -95,6 +95,10 @@ func (dec *Decoder) decodeLine(line []string, s reflect.Value) error {
 		if !f.CanSet() {
 			continue
 		}
+		if p.IsZero(line[idx]) {
+			f.Set(reflect.Zero(f.Type()))
+			continue
+		}
 
 		switch f.Kind() {
 		default:
