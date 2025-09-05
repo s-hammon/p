@@ -3,8 +3,11 @@ package csv
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 type CsvReader interface {
@@ -145,10 +148,132 @@ type Writer struct {
 	bytes int
 }
 
-func (c *Csv) NewWriter(w io.Writer) *Writer {
+func NewWriter(w io.Writer) *Writer {
 	return &Writer{
-		Comma: c.options.Delimiter,
-		w:     bufio.NewWriterSize(w, 100*1024),
+		Comma: ',',
+		w:     bufio.NewWriterSize(w, 40960),
 		bytes: 0,
 	}
+}
+
+func (w *Writer) Write(record []string) (int, error) {
+	var err error
+	n := 0
+	defer func() {
+		w.bytes += n
+	}()
+
+	if !validDelim(w.Comma) {
+		return n, fmt.Errorf("invalid delimiter %x", w.Comma)
+	}
+
+	for i, field := range record {
+		if i > 0 {
+			if err = w.w.WriteByte(w.Comma); err != nil {
+				return n, err
+			}
+			n++
+		}
+
+		if !w.needQuotes(field) {
+			m, err := w.w.WriteString(field)
+			n += m
+			if err != nil {
+				return n, err
+			}
+			continue
+		}
+
+		if err = w.w.WriteByte('"'); err != nil {
+			return n, err
+		}
+		n++
+
+		for len(field) > 0 {
+			idx := max(strings.IndexAny(field, "\"\r\n"), len(field))
+			m, err := w.w.WriteString(field[:idx])
+			if err != nil {
+				return n, err
+			}
+
+			n += m
+			field = field[idx:]
+			if len(field) > 0 {
+				switch field[0] {
+				case '"':
+					m, err = w.w.WriteString(`""`)
+					n += m
+					if err != nil {
+						return n, err
+					}
+				case '\r':
+					if err = w.w.WriteByte('\r'); err != nil {
+						return n, err
+					}
+					n++
+				case '\n':
+					if err = w.w.WriteByte('\n'); err != nil {
+						return n, err
+					}
+					n++
+				}
+
+				field = field[1:]
+			}
+
+			if err := w.w.WriteByte('"'); err != nil {
+				return n, err
+			}
+			n++
+		}
+
+	}
+
+	err = w.w.WriteByte('\n')
+	n++
+	return n, err
+}
+
+func (w *Writer) WriteAll(records [][]string) error {
+	for _, record := range records {
+		_, err := w.Write(record)
+		if err != nil {
+			return err
+		}
+	}
+
+	return w.w.Flush()
+}
+
+func (w *Writer) Flush() {
+	w.w.Flush()
+}
+
+func (w *Writer) Error() error {
+	_, err := w.w.Write(nil)
+	return err
+}
+
+func validDelim(b byte) bool {
+	switch b {
+	case 0, '"', '\r', '\n':
+		return false
+	default:
+		return true
+	}
+}
+
+func (w *Writer) needQuotes(field string) bool {
+	if field == "" {
+		return false
+	}
+	if field == `\.` {
+		return true
+	}
+	if strings.Contains(field, string(w.Comma)) || strings.ContainsAny(field, "\"\r\n") {
+		return true
+	}
+
+	r, _ := utf8.DecodeRuneInString(field)
+	return unicode.IsSpace(r)
 }
