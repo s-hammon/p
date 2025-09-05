@@ -18,14 +18,15 @@ type Decoder struct {
 	headers map[string]int
 }
 
-func NewDecoder(r io.Reader, options ...CsvOptions) (*Decoder, error) {
-	reader := csv.NewReader(r)
-	header, err := reader.Read()
+func NewDecoder(r io.Reader) (*Decoder, error) {
+	dec := &Decoder{csv: csv.NewReader(r)}
+	header, err := dec.csv.Read()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("csv.Read: %v", err)
 	}
 
-	return &Decoder{reader, colMap(header)}, nil
+	dec.headers = colMap(header)
+	return dec, nil
 }
 
 func (dec *Decoder) Decode(v any) error {
@@ -38,9 +39,9 @@ func (dec *Decoder) Decode(v any) error {
 	switch kind := elem.Kind(); kind {
 	default:
 		return fmt.Errorf("unsupported target type: %s", kind)
+	// TODO: extend support to maps
 	case reflect.Slice:
 		elemType := elem.Type().Elem()
-		// TODO: extend support to maps
 		if elemType.Kind() != reflect.Struct {
 			return fmt.Errorf("expected slice of structs, got slice of %s", elemType.Kind())
 		}
