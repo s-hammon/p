@@ -2,35 +2,30 @@
 package csv
 
 import (
-	"bufio"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"reflect"
 	"strconv"
-	"strings"
 
 	"github.com/s-hammon/p"
 )
 
 type Decoder struct {
-	csv     *csvReader
+	csv     *csv.Reader
 	headers map[string]int
 }
 
 func NewDecoder(r io.Reader, options ...CsvOptions) (*Decoder, error) {
-	csvReader := &csvReader{
-		reader:     bufio.NewReaderSize(r, 100*1024),
-		lineBuffer: strings.Builder{},
-		csv:        NewCsv(options...),
-	}
-	header, err := csvReader.Read()
+	reader := csv.NewReader(r)
+	header, err := reader.Read()
 	if err != nil {
 		return nil, err
 	}
 
-	return &Decoder{csvReader, colMap(header)}, nil
+	return &Decoder{reader, colMap(header)}, nil
 }
 
 func (dec *Decoder) Decode(v any) error {
