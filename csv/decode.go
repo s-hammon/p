@@ -77,9 +77,6 @@ func (dec *Decoder) Decode(v any) error {
 
 func (dec *Decoder) decodeLine(line []string, s reflect.Value) error {
 	numFields := s.NumField()
-	if numFields != len(dec.headers) {
-		return fmt.Errorf("record length: %d (expecting %d)", s.NumField(), len(line))
-	}
 
 	for i := range numFields {
 		field := s.Type().Field(i)
