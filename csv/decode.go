@@ -9,6 +9,7 @@ import (
 	"log"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/s-hammon/p"
 )
@@ -100,6 +101,18 @@ func (dec *Decoder) decodeLine(line []string, s reflect.Value) error {
 		switch f.Kind() {
 		default:
 			return fmt.Errorf("unsupported type %s for field %s", f.Type(), name)
+		case reflect.Slice:
+			if f.Type().Elem().Kind() != reflect.String {
+				return errors.New("slice fields currently only support string")
+			}
+			parts := strings.Split(line[idx], ",")
+			parts[0] = strings.TrimPrefix(parts[0], "[")
+			parts[len(parts)-1] = strings.TrimSuffix(parts[len(parts)-1], "]")
+			slice := reflect.MakeSlice(f.Type(), len(parts), len(parts))
+			for i, part := range parts {
+				slice.Index(i).SetString(part)
+			}
+			f.Set(slice)
 		case reflect.String:
 			f.SetString(line[idx])
 		case reflect.Int:
