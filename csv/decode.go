@@ -87,12 +87,12 @@ func (dec *Decoder) decodeLine(line []string, s reflect.Value) error {
 		name := p.Coalesce(tag, field.Name)
 
 		idx, ok := dec.headers[name]
-		if !ok || idx > len(line) {
+		if !ok || idx >= len(line) {
 			continue
 		}
 
 		f := s.Field(i)
-		if f.CanSet() {
+		if !f.CanSet() {
 			continue
 		}
 
