@@ -254,6 +254,10 @@ func (w *Writer) Error() error {
 	return err
 }
 
+func (w *Writer) Bytes() int {
+	return w.bytes
+}
+
 func validDelim(b byte) bool {
 	switch b {
 	case 0, '"', '\r', '\n':
