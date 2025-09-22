@@ -32,3 +32,29 @@ func (s *Stack[T]) Pop() (T, bool) {
 	s.elements = s.elements[:idx]
 	return elem, true
 }
+
+func (s *Stack[T]) Peek() (T, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var zero T
+	if len(s.elements) == 0 {
+		return zero, false
+	}
+
+	return s.elements[len(s.elements)-1], true
+}
+
+func (s *Stack[T]) Len() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return len(s.elements)
+}
+
+func (s *Stack[T]) Clear() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.elements = nil
+}
