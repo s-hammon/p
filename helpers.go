@@ -77,7 +77,6 @@ func StringDeserialize(props []string) map[string]string {
 	m := make(map[string]string)
 	for _, prop := range props {
 		parts := strings.SplitN(prop, "=", 2)
-		fmt.Println(len(Set(parts)))
 		if len(Set(parts)) == 2 {
 			m[parts[0]] = parts[1]
 		}
