@@ -30,6 +30,18 @@ func (q *Queue[T]) Pop() (T, bool) {
 	return elem, true
 }
 
+func (q *Queue[T]) Peek() (T, bool) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	var zero T
+	if len(q.elements) == 0 {
+		return zero, false
+	}
+
+	return q.elements[0], true
+}
+
 func (q *Queue[T]) Size() int {
 	q.mu.Lock()
 	defer q.mu.Unlock()
