@@ -43,11 +43,26 @@ func Format(tmpl string, elems ...any) string {
 	return fmt.Sprintf(tmpl, elems...)
 }
 
-func Coalesce[T any](a, b T) T {
-	if IsZero(a) {
-		return b
+// Coalesce will return the first non-zero value in elems.
+func Coalesce[T any](elems ...T) T {
+	var res T
+	for len(elems) > 0 {
+		if res = elems[0]; !IsZero(res) {
+			return res
+		}
+		elems = elems[1:]
 	}
-	return a
+	return res
+}
+
+// If evaluates the stmt, and returns either the true or false result.
+// What can I say? Can't you tell I come from a SQL/data background?
+func If[T any](stmt bool, trueRes, falseRes T) T {
+	if stmt {
+		return trueRes
+	}
+
+	return falseRes
 }
 
 // convert map to list of key-value pairs ("key=value")

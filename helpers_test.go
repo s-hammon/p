@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCoalesce(t *testing.T) {
@@ -63,6 +64,10 @@ func TestCoalesce(t *testing.T) {
 			}
 		})
 	}
+
+	nums := []int{0, 0, 4, 5, 6}
+	got := Coalesce(nums...)
+	require.Equal(t, 4, got)
 }
 
 func TestStringDeserialize(t *testing.T) {
