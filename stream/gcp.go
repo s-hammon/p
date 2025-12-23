@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery/storage/managedwriter"
+	"google.golang.org/api/option"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 type BigQueryStream struct {
@@ -34,6 +36,21 @@ type BigQueryStreamConfig struct {
 	ChannelSize   int
 	FlushInterval time.Duration
 	AppendTimeout time.Duration
+
+	clientOpts []option.ClientOption
+}
+
+// NOTE: multiplexing with the managed writer is an experimental feature
+func (c BigQueryStreamConfig) AsMultiplexer(limit ...int) {
+	l := 10
+	if len(limit) > 0 {
+		l = limit[0]
+	}
+
+	c.clientOpts = append(c.clientOpts,
+		managedwriter.WithMultiplexing(),
+		managedwriter.WithMultiplexPoolLimit(l),
+	)
 }
 
 func (c BigQueryStreamConfig) withDefaults() BigQueryStreamConfig {
@@ -53,7 +70,22 @@ func (c BigQueryStreamConfig) withDefaults() BigQueryStreamConfig {
 	return c
 }
 
+type Options func() *managedwriter.WriterOption
+
+func CommittedStreamOpts(tableName string, descriptor *descriptorpb.DescriptorProto) (opts []managedwriter.WriterOption) {
+	opts = append(opts,
+		managedwriter.WithDestinationTable(tableName),
+		managedwriter.WithType(managedwriter.CommittedStream),
+		managedwriter.WithSchemaDescriptor(descriptor),
+	)
+
+	return opts
+}
+
 func NewBigQueryStream(ctx context.Context, projectId string, cfg BigQueryStreamConfig, opts ...managedwriter.WriterOption) (*BigQueryStream, error) {
+	if len(opts) < 1 {
+		return nil, errors.New("please provide options for stream (use CommittedStreamOpts)")
+	}
 	cfg = cfg.withDefaults()
 
 	client, err := managedwriter.NewClient(ctx, projectId)
