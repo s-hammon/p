@@ -12,7 +12,8 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 type BigQueryStream struct {
@@ -72,7 +73,8 @@ func (c BigQueryStreamConfig) withDefaults() BigQueryStreamConfig {
 
 type Options func() *managedwriter.WriterOption
 
-func CommittedStreamOpts(tableName string, descriptor *descriptorpb.DescriptorProto) (opts []managedwriter.WriterOption) {
+func CommittedStreamOpts(tableName string, messageDescriptor protoreflect.MessageDescriptor) (opts []managedwriter.WriterOption) {
+	descriptor := protodesc.ToDescriptorProto(messageDescriptor)
 	opts = append(opts,
 		managedwriter.WithDestinationTable(tableName),
 		managedwriter.WithType(managedwriter.CommittedStream),
