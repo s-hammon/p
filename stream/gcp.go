@@ -168,7 +168,7 @@ func (s *BigQueryStream) Shutdown() error {
 
 func (s *BigQueryStream) writerLoop(ctx context.Context) {
 	defer s.wg.Done()
-	log.Println("spawned writer goroutine...")
+	log.Println("spawned writer goroutine")
 
 	t := time.NewTicker(s.flushInterval)
 	defer t.Stop()
@@ -191,10 +191,12 @@ func (s *BigQueryStream) writerLoop(ctx context.Context) {
 			switch classifyStreamError(err) {
 			default:
 			case StreamFatal:
+				log.Println("fatal error:", err)
 				s.recordErr(err)
 				s.cancel()
 				return
 			case StreamRetryable:
+				log.Println("retryable error:", err)
 				s.recordErr(err)
 				buf = append(batch, buf...)
 				return
@@ -205,7 +207,6 @@ func (s *BigQueryStream) writerLoop(ctx context.Context) {
 	handleRow := func(row []byte) {
 		buf = append(buf, row)
 		if len(buf) >= s.batchSize {
-			log.Println("batch size flush...")
 			flush()
 		}
 	}
@@ -213,10 +214,8 @@ func (s *BigQueryStream) writerLoop(ctx context.Context) {
 	for {
 		select {
 		case <-t.C:
-			log.Println("interval flush...")
 			flush()
 		case <-ctx.Done():
-			log.Println("received finish notification...")
 			for {
 				select {
 				default:
@@ -233,7 +232,6 @@ func (s *BigQueryStream) writerLoop(ctx context.Context) {
 				}
 			}
 		case row, ok := <-s.ch:
-			log.Println("handling row...")
 			if !ok {
 				flush()
 				return
