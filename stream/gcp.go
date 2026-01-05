@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"sync"
 	"time"
@@ -153,6 +154,11 @@ func (s *BigQueryStream) Shutdown() error {
 	closeErr := s.Close()
 	s.errMu.Lock()
 	defer s.errMu.Unlock()
+
+	if errors.Is(closeErr, io.EOF) {
+		closeErr = nil
+	}
+
 	if len(s.errs) == 0 {
 		return closeErr
 	}
@@ -187,16 +193,27 @@ func (s *BigQueryStream) writerLoop(ctx context.Context) {
 		appendCtx, cancel := context.WithTimeout(context.Background(), s.appendTimeout)
 		defer cancel()
 
-		if _, err := s.ms.AppendRows(appendCtx, batch); err != nil {
+		res, err := s.ms.AppendRows(appendCtx, batch)
+		if err != nil {
 			switch classifyStreamError(err) {
-			default:
 			case StreamFatal:
-				log.Println("fatal error:", err)
 				s.recordErr(err)
 				s.cancel()
 				return
 			case StreamRetryable:
-				log.Println("retryable error:", err)
+				s.recordErr(err)
+				buf = append(batch, buf...)
+				return
+			}
+		}
+
+		if _, err := res.GetResult(appendCtx); err != nil {
+			switch classifyStreamError(err) {
+			case StreamFatal:
+				s.recordErr(err)
+				s.cancel()
+				return
+			case StreamRetryable:
 				s.recordErr(err)
 				buf = append(batch, buf...)
 				return
@@ -262,10 +279,6 @@ const (
 )
 
 func classifyStreamError(err error) StreamOutcome {
-	if err == nil {
-		return StreamOK
-	}
-
 	st, ok := status.FromError(err)
 	if !ok {
 		return StreamRetryable

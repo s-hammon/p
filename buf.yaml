@@ -1,0 +1,11 @@
+version: v1
+
+name: buf.build/s-hammon/p
+
+lint:
+  use:
+    - DEFAULT
+
+breaking:
+  use:
+    - FILE

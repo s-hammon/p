@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package test.stream.v1;
+
+option go_package = "stream/internal/testproto;testproto";
+
+message TestRow {
+  string id = 1;
+  string payload = 2;
+  int64 ts = 3;
+}

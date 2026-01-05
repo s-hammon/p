@@ -57,7 +57,7 @@ func (c PushHandlerConfig) withDefaults() PushHandlerConfig {
 
 type RowSerializer func(raw []byte, attrs map[string]string) ([]byte, error)
 
-func NewPushHandler(stream Stream, serialize RowSerializer, cfg PushHandlerConfig) http.HandlerFunc {
+func NewPushHandler(stream Stream, serializer RowSerializer, cfg PushHandlerConfig) http.HandlerFunc {
 	cfg = cfg.withDefaults()
 	sem := make(chan struct{}, cfg.MaxConcurrency)
 
@@ -103,7 +103,7 @@ func NewPushHandler(stream Stream, serialize RowSerializer, cfg PushHandlerConfi
 			return
 		}
 
-		row, err := serialize(raw, env.Message.Attributes)
+		row, err := serializer(raw, env.Message.Attributes)
 		if err != nil {
 			log.Printf("poison message (serialization failed) messageId=%s err=%v\n", env.Message.MessageId, err)
 			w.WriteHeader(http.StatusOK)
