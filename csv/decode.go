@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/s-hammon/p"
 )
@@ -127,10 +128,38 @@ func (dec *Decoder) decodeLine(line []string, s reflect.Value) error {
 				return fmt.Errorf("idx: %d\tstrconv.ParseFloat(%v): %v", idx, line[idx], err)
 			}
 			f.SetFloat(fval)
+		case reflect.Struct:
+			if f.Type() == reflect.TypeOf(time.Time{}) {
+				raw := line[idx]
+
+				var (
+					t   time.Time
+					err error
+				)
+
+				for _, layout := range csvTimeLayouts {
+					t, err = time.Parse(layout, raw)
+					if err == nil {
+						f.Set(reflect.ValueOf(t))
+						goto parsedTime
+					}
+				}
+
+				return fmt.Errorf("unsupported time format %q", raw)
+			}
+		parsedTime:
+			continue
 		}
 	}
 
 	return nil
+}
+
+var csvTimeLayouts = []string{
+	time.RFC3339,
+	"2006-01-02",
+	"2006-01-02 15:04:05",
+	"20060102150405",
 }
 
 func colMap(headers []string) map[string]int {
